@@ -7,10 +7,8 @@ import (
 )
 
 //var sources = [...]string{"http://www.cnn.com", "http://www.foxnews.com"}
-var sources = [...]string{"http://www.cnn.com"}
-var userAgentHeader = "Mozilla/5.0 (X11; Linux x86_64; rv:64.0) Gecko/l20100101 Firefox/64.0"
-var headlineClassNames = [...]string{"cd__headline-text"}
-var headlineElementNames = [...]string{"span"}
+var sources = [...]string{"http://www.cnn.com", "http://www.foxnews.com"}
+var headlineClassNames = [...]string{"cd__headline-text", "title"}
 
 func askSources() {
 
@@ -31,14 +29,11 @@ func askSources() {
 		panic(err)
 	}
 	defer service.Stop()
-
+	//TODO handle selenium warnings
 	capabilities := selenium.Capabilities{"browserName": "firefox"}
+	wd, err := selenium.NewRemote(capabilities, fmt.Sprintf("http://localhost:%d/wd/hub", port))
 	for _, source := range sources {
-
-		//TODO handle selenium warnings
-		wd, err := selenium.NewRemote(capabilities, fmt.Sprintf("http://localhost:%d/wd/hub", port))
-		fmt.Printf("%v\n", wd)
-
+		fmt.Printf("Source : %v\n", source)
 		err = wd.Get(source)
 		if err != nil {
 			panic(err)
@@ -59,20 +54,27 @@ func getHeadlines(wd selenium.WebDriver) []string {
 			if len(currentText) > 0 {
 				headlines = append(headlines, currentText)
 			} else { //now find acceptable child
-				children, _ := e.FindElements(selenium.ByTagName, "*")
-				if len(children) > 0 {
-					for _, child := range children {
-						childText, _ := child.Text()
-						if len(childText) > 0 {
-							headlines = append(headlines, childText)
-						}
-					}
-				}
+				headlines = append(headlines, extractHeadlinesFromChildren(e)...)
 			}
 		}
 	}
 
 	return headlines
+}
+
+func extractHeadlinesFromChildren(element selenium.WebElement)([]string){
+	children, _ := element.FindElements(selenium.ByTagName, "*")
+	childHeadlines := make([]string, 0)
+	if len(children) > 0 {
+		for _, child := range children {
+			childText, _ := child.Text()
+			if len(childText) > 0 {
+				childHeadlines = append(childHeadlines, childText)
+			}
+			childHeadlines = append(childHeadlines, extractHeadlinesFromChildren(child)...)
+		}
+	}
+	return childHeadlines
 }
 
 func main() {
