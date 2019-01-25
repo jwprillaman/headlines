@@ -5,6 +5,7 @@ import (
 	"github.com/tebeka/selenium"
 	"os"
 	"strings"
+	"sort"
 )
 
 type SourceSummary struct {
@@ -19,7 +20,13 @@ type CommonHeadlines struct {
 	headlines []string
 }
 
-var sources = [...]string{"http://www.cnn.com"}
+type Word struct {
+	value     string
+	headlines []string
+	count     int
+}
+
+var sources = [...]string{"http://www.cnn.com", "http://www.foxnews.com"}
 
 //TODO maybe store this somewhere else
 var stopWords = [...]string{"a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "could", "did", "do", "does", "doing", "down", "during", "each", "few", "for", "from", "further", "had", "has", "have", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "it", "it's", "its", "itself", "let's", "me", "more", "most", "my", "myself", "nor", "of", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "she", "she'd", "she'll", "she's", "should", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "we", "we'd", "we'll", "we're", "we've", "were", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "would", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"}
@@ -76,9 +83,9 @@ func filterStopWords(original string, stopWordSet map[string]struct{}) string {
 	builder := strings.Builder{}
 	tokens := strings.Split(original, " ")
 	for i, token := range tokens {
-		if _,isStopWord := stopWordSet[token]; !isStopWord {
+		if _, isStopWord := stopWordSet[token]; !isStopWord {
 			builder.WriteString(token)
-			if i != len(tokens) -1 {
+			if i != len(tokens)-1 {
 				builder.WriteString(" ")
 			}
 		}
@@ -120,14 +127,53 @@ func extractHeadlinesFromChildren(element selenium.WebElement) []string {
 
 func printSourceSummary(sourceSummary SourceSummary) {
 	fmt.Printf("%v\n", sourceSummary.source)
-	for i,v := range sourceSummary.headlines{
+	for i, v := range sourceSummary.headlines {
 		fmt.Printf("\t%v\n\t\t%v\n%v\n", v, sourceSummary.filteredHeadlines[i], i)
 	}
 }
 
+func compareHeadlines(sourceSummaries []SourceSummary) []Word{
+	wordCounts := make(map[string]*Word)
+
+	for _, sourceSummary := range sourceSummaries {
+		for _, headline := range sourceSummary.filteredHeadlines {
+			tokenizedHeadline := strings.Split(headline, " ")
+			for _, token := range tokenizedHeadline {
+				word, exists := wordCounts[token]
+				if exists {
+					word.count = word.count + 1
+					word.headlines = append(word.headlines, headline)
+				} else {
+					headlines := make([]string, 1)
+					headlines[0] = headline
+					currentWord := Word{token, headlines, 1}
+					wordCounts[token] = &currentWord
+				}
+			}
+		}
+	}
+	output := make([]Word, len(wordCounts))
+	i := 0
+	for _,v := range wordCounts {
+		output[i] = *v
+		i++
+	}
+
+	sort.SliceStable(output, func(i,j int)(bool){
+		return output[i].count < output[j].count
+	})
+
+	return output
+}
+
 func main() {
 	summaries := getSourceSummaries()
-	for _,summary := range summaries {
+	for _, summary := range summaries {
 		printSourceSummary(summary)
 	}
+	wordCounts := compareHeadlines(summaries)
+	for _,v := range wordCounts {
+		fmt.Printf("%v\n", v)
+	}
+
 }
