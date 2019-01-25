@@ -83,7 +83,7 @@ func filterStopWords(original string, stopWordSet map[string]struct{}) string {
 	builder := strings.Builder{}
 	tokens := strings.Split(original, " ")
 	for i, token := range tokens {
-		if _, isStopWord := stopWordSet[token]; !isStopWord {
+		if _, isStopWord := stopWordSet[strings.ToLower(token)]; !isStopWord {
 			builder.WriteString(token)
 			if i != len(tokens)-1 {
 				builder.WriteString(" ")
