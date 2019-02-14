@@ -23,6 +23,7 @@ type CommonHeadlines struct {
 type Word struct {
 	value     string
 	headlines []string
+	sources []string
 	count     int
 }
 
@@ -132,6 +133,21 @@ func printSourceSummary(sourceSummary SourceSummary) {
 	}
 }
 
+func printWords(words []Word) {
+	fmt.Printf("Overlap :\n")
+	for _,word := range words {
+
+		if len(word.sources) > 1 {
+			fmt.Printf("%v\n\tSources : ", word.value)
+			for _,source := range word.sources {
+				fmt.Printf("%v , ", source)
+			}
+			fmt.Printf("\n")
+		}
+	}
+}
+
+
 func compareHeadlines(sourceSummaries []SourceSummary) []Word{
 	wordCounts := make(map[string]*Word)
 
@@ -143,10 +159,21 @@ func compareHeadlines(sourceSummaries []SourceSummary) []Word{
 				if exists {
 					word.count = word.count + 1
 					word.headlines = append(word.headlines, headline)
+					hasSource := false
+					for _, source := range word.sources {
+						if source == sourceSummary.source {
+							hasSource = true
+						}
+					}
+					if !hasSource {
+						word.sources = append(word.sources, sourceSummary.source)
+					}
 				} else {
 					headlines := make([]string, 1)
 					headlines[0] = headline
-					currentWord := Word{token, headlines, 1}
+					sources := make([]string, 1)
+					sources[0] = sourceSummary.source
+					currentWord := Word{token, headlines, sources, 1}
 					wordCounts[token] = &currentWord
 				}
 			}
@@ -172,8 +199,6 @@ func main() {
 		printSourceSummary(summary)
 	}
 	wordCounts := compareHeadlines(summaries)
-	for _,v := range wordCounts {
-		fmt.Printf("%v\n", v)
-	}
+	printWords(wordCounts)
 
 }
