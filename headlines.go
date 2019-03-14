@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/tebeka/selenium"
 	"os"
-	"strings"
 	"sort"
+	"strings"
 )
 
 type SourceSummary struct {
@@ -23,7 +23,7 @@ type CommonHeadlines struct {
 type Word struct {
 	value     string
 	headlines []string
-	sources []string
+	sources   []string
 	count     int
 }
 
@@ -135,11 +135,11 @@ func printSourceSummary(sourceSummary SourceSummary) {
 
 func printWords(words []Word) {
 	fmt.Printf("Overlap :\n")
-	for _,word := range words {
+	for _, word := range words {
 
 		if len(word.sources) > 1 {
 			fmt.Printf("%v\n\tSources : ", word.value)
-			for _,source := range word.sources {
+			for _, source := range word.sources {
 				fmt.Printf("%v , ", source)
 			}
 			fmt.Printf("\n")
@@ -147,8 +147,7 @@ func printWords(words []Word) {
 	}
 }
 
-
-func compareHeadlines(sourceSummaries []SourceSummary) []Word{
+func compareHeadlines(sourceSummaries []SourceSummary) []Word {
 	wordCounts := make(map[string]*Word)
 
 	for _, sourceSummary := range sourceSummaries {
@@ -181,12 +180,12 @@ func compareHeadlines(sourceSummaries []SourceSummary) []Word{
 	}
 	output := make([]Word, len(wordCounts))
 	i := 0
-	for _,v := range wordCounts {
+	for _, v := range wordCounts {
 		output[i] = *v
 		i++
 	}
 
-	sort.SliceStable(output, func(i,j int)(bool){
+	sort.SliceStable(output, func(i, j int) bool {
 		return output[i].count < output[j].count
 	})
 
