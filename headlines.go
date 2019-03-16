@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 )
-
+//TODO move structs from main
 type SourceSummary struct {
 	source            string
 	headlines         []string
@@ -34,6 +34,8 @@ var stopWords = [...]string{"a", "about", "above", "after", "again", "against", 
 
 var headlineClassNames = [...]string{"cd__headline-text", "title"}
 
+
+//TODO replace selenium with native chrome headless
 func getSourceSummaries() []SourceSummary {
 	output := make([]SourceSummary, 0)
 	const (
